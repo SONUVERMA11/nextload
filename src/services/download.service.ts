@@ -350,11 +350,14 @@ const handleVideoDownload = async (
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ detail: `HTTP ${resp.status}` }));
+      throw new Error(err.detail || `Server returned ${resp.status}`);
+    }
     info = await resp.json();
   } catch (e: any) {
     const msg = e.name === 'AbortError' ? 'Request timed out (15s)' : e.message;
-    throw new Error(`yt-dlp server unreachable. ${msg}. Configure the server URL in Settings > Integrations.`);
+    throw new Error(`yt-dlp error: ${msg}. Try testing on a local residential network if YouTube blocks the cloud server.`);
   }
 
   store.updateDownload(id, {
@@ -364,23 +367,33 @@ const handleVideoDownload = async (
     error: undefined,
   });
 
+  let ytFormatStr = 'best';
+  if (request.quality === 'audio') {
+    ytFormatStr = 'bestaudio[ext=m4a]/bestaudio/best';
+  } else if (request.quality && request.quality !== 'best') {
+    ytFormatStr = `best[height<=${request.quality}]/best`;
+  }
+  
   // Step 2: Get direct download URL
   store.updateDownload(id, { error: 'Resolving download URL...' });
-  const formatId = request.quality || 'best';
 
   let directUrl: any;
   try {
     const controller2 = new AbortController();
     const timeout2 = setTimeout(() => controller2.abort(), 15000);
     const resp = await fetch(
-      `${serverUrl}/download-url?url=${encodeURIComponent(request.url)}&format_id=${formatId}`,
+      `${serverUrl}/download-url?url=${encodeURIComponent(request.url)}&format_id=${encodeURIComponent(ytFormatStr)}`,
       { headers: { 'Content-Type': 'application/json' }, signal: controller2.signal }
     );
     clearTimeout(timeout2);
-    if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ detail: `HTTP ${resp.status}` }));
+      throw new Error(err.detail || `Server returned ${resp.status}`);
+    }
     directUrl = await resp.json();
   } catch (e: any) {
-    throw new Error(`Failed to resolve download URL: ${e.message}`);
+    const msg = e.name === 'AbortError' ? 'Request timed out (15s)' : e.message;
+    throw new Error(`Failed to resolve download URL: ${msg}`);
   }
 
   if (!directUrl?.direct_url) {
