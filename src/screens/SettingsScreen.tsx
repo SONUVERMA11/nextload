@@ -24,6 +24,7 @@ import { useSettingsStore } from '../store/settings.store';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useDownloadsStore } from '../store/downloads.store';
 import * as downloadService from '../services/download.service';
+import * as FileSystem from 'expo-file-system';
 
 export const SettingsScreen: React.FC = () => {
   const { colors, radii, spacing, typography: typo } = useTheme();
@@ -245,6 +246,19 @@ export const SettingsScreen: React.FC = () => {
               text: 'Reset to Default',
               onPress: () =>
                 settings.setDownloadPath('/storage/emulated/0/Download/NexLoad'),
+            },
+            {
+              text: 'Change',
+              onPress: async () => {
+                try {
+                  const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+                  if (permissions.granted) {
+                    settings.setDownloadPath(permissions.directoryUri);
+                  }
+                } catch (e: any) {
+                  Alert.alert('Error', 'Failed to pick directory: ' + e.message);
+                }
+              },
             },
           ])
         }

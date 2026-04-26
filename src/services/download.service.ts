@@ -311,13 +311,57 @@ const downloadFileWithProgress = async (
     throw new Error('Downloaded file is 0 bytes — the link may be broken');
   }
 
+  // Handle moving to custom download path if configured
+  const settings = useSettingsStore.getState();
+  let finalPath = fileUri;
+  
+  if (settings.downloadPath) {
+    try {
+      if (settings.downloadPath.startsWith('content://')) {
+        // Use Storage Access Framework for user-selected directories
+        const mimeType = fileName.endsWith('.mp4') ? 'video/mp4' : 
+                         fileName.endsWith('.m4a') ? 'audio/mp4' :
+                         fileName.endsWith('.mp3') ? 'audio/mpeg' : 'application/octet-stream';
+        
+        const safFileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+          settings.downloadPath,
+          fileName,
+          mimeType
+        );
+        
+        // Native copy to the SAF URI
+        await FileSystem.copyAsync({ from: fileUri, to: safFileUri });
+        finalPath = safFileUri;
+        
+        // Cleanup internal scratch file
+        try { await FileSystem.deleteAsync(fileUri, { idempotent: true }); } catch {}
+      } else {
+        // Standard absolute path fallback (e.g. Android 10 and below, or if app has MANAGE_EXTERNAL_STORAGE)
+        const targetDir = settings.downloadPath.endsWith('/') ? settings.downloadPath : `${settings.downloadPath}/`;
+        const targetUri = targetDir.startsWith('file://') ? `${targetDir}${fileName}` : `file://${targetDir}${fileName}`;
+        
+        // Ensure directory exists
+        const dirInfo = await FileSystem.getInfoAsync(targetDir.startsWith('file://') ? targetDir : `file://${targetDir}`);
+        if (!dirInfo.exists) {
+          await FileSystem.makeDirectoryAsync(targetDir.startsWith('file://') ? targetDir : `file://${targetDir}`, { intermediates: true });
+        }
+        
+        await FileSystem.moveAsync({ from: fileUri, to: targetUri });
+        finalPath = targetUri;
+      }
+    } catch (e: any) {
+      console.warn(`[NexLoad] Failed to move file to ${settings.downloadPath}:`, e.message);
+      // Fallback to internal storage fileUri which is already successfully downloaded
+    }
+  }
+
   // ✅ Success!
   useDownloadsStore.getState().updateDownload(id, {
     status: 'completed',
     progress: 100,
     downloadedBytes: fileSize,
     fileSize: fileSize,
-    filePath: fileUri,
+    filePath: finalPath,
     completedAt: Date.now(),
     speed: 0,
     eta: 0,
