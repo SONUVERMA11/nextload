@@ -5,7 +5,7 @@
 
 import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { SearchResult } from '../services/torrentSearch.service';
 import * as downloadService from '../services/download.service';
@@ -35,8 +35,8 @@ export const TorrentResultCard: React.FC<TorrentResultCardProps> = ({
 
   const handleCopyMagnet = useCallback(async () => {
     try {
-      const Clipboard = require('@react-native-clipboard/clipboard').default;
-      Clipboard.setString(result.magnet);
+      const Clipboard = require('expo-clipboard');
+      await Clipboard.setStringAsync(result.magnet);
       Alert.alert('Copied', 'Magnet link copied to clipboard');
     } catch {
       Alert.alert('Error', 'Could not copy to clipboard');

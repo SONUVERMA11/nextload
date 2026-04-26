@@ -14,7 +14,7 @@ import {
   StyleSheet,
   RefreshControl,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { FileCard, FileItem, getFileType } from '../components/FileCard';
 import { formatBytes } from '../utils/formatBytes';

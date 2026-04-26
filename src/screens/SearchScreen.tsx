@@ -14,7 +14,7 @@ import {
   Keyboard,
   RefreshControl,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { useSearchStore, SearchTab } from '../store/search.store';
 import { searchAll, SearchResult } from '../services/torrentSearch.service';

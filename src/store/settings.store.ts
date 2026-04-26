@@ -26,8 +26,8 @@ interface SettingsState {
   // Integrations
   jackettServerUrl: string;
   ytdlpServerUrl: string;
-  telegramApiId: string;
-  telegramApiHash: string;
+  telegramSession: string;
+  telegramPhone: string;
 
   // Actions
   setThemeMode: (mode: ThemeMode) => void;
@@ -38,7 +38,8 @@ interface SettingsState {
   setNotificationPrefs: (prefs: Partial<Pick<SettingsState, 'showDownloadProgress' | 'showCompletionAlert' | 'vibrateOnComplete'>>) => void;
   setJackettUrl: (url: string) => void;
   setYtdlpServerUrl: (url: string) => void;
-  setTelegramCredentials: (apiId: string, apiHash: string) => void;
+  setTelegramAuth: (session: string, phone: string) => void;
+  logoutTelegram: () => void;
   resetToDefaults: () => void;
 }
 
@@ -55,8 +56,8 @@ const DEFAULT_SETTINGS = {
   vibrateOnComplete: true,
   jackettServerUrl: '',
   ytdlpServerUrl: 'https://nexload-ytdlp.onrender.com',
-  telegramApiId: '',
-  telegramApiHash: '',
+  telegramSession: '',
+  telegramPhone: '',
 };
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -87,8 +88,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
   setYtdlpServerUrl: (ytdlpServerUrl) => set({ ytdlpServerUrl }),
 
-  setTelegramCredentials: (telegramApiId, telegramApiHash) =>
-    set({ telegramApiId, telegramApiHash }),
+  setTelegramAuth: (telegramSession, telegramPhone) =>
+    set({ telegramSession, telegramPhone }),
+
+  logoutTelegram: () => set({ telegramSession: '', telegramPhone: '' }),
 
   resetToDefaults: () => set(DEFAULT_SETTINGS),
 }));

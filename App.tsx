@@ -8,7 +8,7 @@ import React from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { DownloadsScreen } from './src/screens/DownloadsScreen';
 import { SearchScreen } from './src/screens/SearchScreen';

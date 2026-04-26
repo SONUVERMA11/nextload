@@ -3,7 +3,7 @@
  * Theme toggle, download preferences, integrations, about
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -14,17 +14,101 @@ import {
   Alert,
   TextInput,
   Linking,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { useSettingsStore } from '../store/settings.store';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useDownloadsStore } from '../store/downloads.store';
+import * as downloadService from '../services/download.service';
 
 export const SettingsScreen: React.FC = () => {
   const { colors, radii, spacing, typography: typo } = useTheme();
   const settings = useSettingsStore();
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editModalTitle, setEditModalTitle] = useState('');
+  const [editModalValue, setEditModalValue] = useState('');
+  const [editModalOnSave, setEditModalOnSave] = useState<((val: string) => void) | null>(null);
+
+  const openEditModal = (title: string, currentValue: string, onSave: (val: string) => void) => {
+    setEditModalTitle(title);
+    setEditModalValue(currentValue);
+    setEditModalOnSave(() => onSave);
+    setEditModalVisible(true);
+  };
   const totalDownloads = useDownloadsStore((s) => s.downloads.length);
+
+  // Telegram Auth State
+  const [telegramAuthStep, setTelegramAuthStep] = useState<'idle' | 'phone' | 'code'>('idle');
+  const [telegramPhoneInput, setTelegramPhoneInput] = useState('');
+  const [telegramCodeInput, setTelegramCodeInput] = useState('');
+  const [telegramPhoneHash, setTelegramPhoneHash] = useState('');
+  const [telegramTempSession, setTelegramTempSession] = useState('');
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  const startTelegramAuth = () => {
+    setTelegramPhoneInput('');
+    setTelegramCodeInput('');
+    setTelegramAuthStep('phone');
+  };
+
+  const handleSendTelegramCode = async () => {
+    if (!telegramPhoneInput) return;
+    setIsAuthenticating(true);
+    try {
+      const serverUrl = settings.ytdlpServerUrl || 'https://nexload-ytdlp.onrender.com';
+      const res = await fetch(`${serverUrl}/telegram/auth/send_code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone_number: telegramPhoneInput.trim() })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+        throw new Error(err.detail || 'Failed to send code');
+      }
+      const data = await res.json();
+      setTelegramPhoneHash(data.phone_code_hash);
+      setTelegramTempSession(data.session_string);
+      setTelegramAuthStep('code');
+    } catch (err: any) {
+      Alert.alert('Telegram Error', err.message);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleVerifyTelegramCode = async () => {
+    if (!telegramCodeInput) return;
+    setIsAuthenticating(true);
+    try {
+      const serverUrl = settings.ytdlpServerUrl || 'https://nexload-ytdlp.onrender.com';
+      const res = await fetch(`${serverUrl}/telegram/auth/sign_in`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          phone_number: telegramPhoneInput.trim(),
+          code: telegramCodeInput.trim(),
+          phone_code_hash: telegramPhoneHash,
+          session_string: telegramTempSession
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+        throw new Error(err.detail || 'Failed to verify code');
+      }
+      const data = await res.json();
+      settings.setTelegramAuth(data.session_string, telegramPhoneInput.trim());
+      setTelegramAuthStep('idle');
+      Alert.alert('Success', 'Telegram account connected successfully!');
+    } catch (err: any) {
+      Alert.alert('Telegram Error', err.message);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
 
   const SectionHeader: React.FC<{ title: string; icon: string }> = ({ title, icon }) => (
     <View style={[styles.sectionHeader, { marginTop: spacing.xxl, paddingHorizontal: spacing.xl }]}>
@@ -95,32 +179,40 @@ export const SettingsScreen: React.FC = () => {
         style={[
           styles.appHeader,
           {
-            backgroundColor: colors.card,
+            backgroundColor: colors.accent,
             padding: spacing.xxl,
+            paddingTop: spacing.xxl + 20,
+            paddingBottom: spacing.xxl + 10,
             alignItems: 'center',
           },
         ]}
       >
+        {/* Decorative circles */}
+        <View style={[styles.headerCircle, styles.headerCircle1, { backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+        <View style={[styles.headerCircle, styles.headerCircle2, { backgroundColor: 'rgba(255,255,255,0.05)' }]} />
+
         <View
           style={[
             styles.appIcon,
             {
-              backgroundColor: colors.accent,
-              borderRadius: radii.xl,
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              borderRadius: 20,
             },
           ]}
         >
-          <Icon name="cloud-download" size={32} color="#FFFFFF" />
+          <Icon name="cloud-download" size={36} color="#FFFFFF" />
         </View>
-        <Text style={[typo.title2, { color: colors.text, marginTop: spacing.md }]}>
+        <Text style={[typo.title2, { color: '#FFFFFF', marginTop: spacing.md, fontSize: 26, fontWeight: '800', letterSpacing: 1 }]}>
           NexLoad
         </Text>
-        <Text style={[typo.subheadline, { color: colors.muted, marginTop: spacing.xs }]}>
-          Download Anything. At Full Speed.
+        <Text style={[typo.subheadline, { color: 'rgba(255,255,255,0.85)', marginTop: spacing.xs }]}>
+          Download Anything. At Full Speed. ⚡
         </Text>
-        <Text style={[typo.caption2, { color: colors.muted, marginTop: spacing.xs }]}>
-          Version 1.0.0 · Beta
-        </Text>
+        <View style={[styles.versionBadge, { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: radii.xl, marginTop: spacing.md }]}>
+          <Text style={[typo.caption2, { color: 'rgba(255,255,255,0.9)', paddingHorizontal: 12, paddingVertical: 4 }]}>
+            v1.0.0 · Beta
+          </Text>
+        </View>
       </View>
 
       {/* Theme */}
@@ -248,13 +340,11 @@ export const SettingsScreen: React.FC = () => {
         value={settings.ytdlpServerUrl || 'Not configured'}
         icon="server"
         onPress={() =>
-          Alert.alert('yt-dlp Server', `Current: ${settings.ytdlpServerUrl || 'Default'}`, [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Reset to Default',
-              onPress: () => settings.setYtdlpServerUrl('https://nexload-ytdlp.onrender.com'),
-            },
-          ])
+          openEditModal(
+            'yt-dlp Server URL',
+            settings.ytdlpServerUrl || '',
+            (url) => settings.setYtdlpServerUrl(url.trim())
+          )
         }
       />
       <SettingRow
@@ -262,26 +352,27 @@ export const SettingsScreen: React.FC = () => {
         value={settings.jackettServerUrl || 'Not configured'}
         icon="search-circle"
         onPress={() =>
-          Alert.alert('Jackett', 'Configure Jackett server URL for 400+ indexers')
+          openEditModal(
+            'Jackett Server URL',
+            settings.jackettServerUrl || '',
+            (url) => settings.setJackettUrl(url.trim())
+          )
         }
       />
       <SettingRow
-        label="Telegram API"
-        value={settings.telegramApiId ? 'Configured ✓' : 'Not configured'}
+        label="Telegram Account"
+        value={settings.telegramSession ? `Connected as ${settings.telegramPhone}` : 'Not connected'}
         icon="paper-plane"
-        onPress={() =>
-          Alert.alert(
-            'Telegram Configuration',
-            'Enter your API ID and Hash from https://my.telegram.org',
-            [
+        onPress={() => {
+          if (settings.telegramSession) {
+            Alert.alert('Disconnect Telegram', 'Are you sure you want to disconnect?', [
               { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Open my.telegram.org',
-                onPress: () => Linking.openURL('https://my.telegram.org'),
-              },
-            ]
-          )
-        }
+              { text: 'Disconnect', style: 'destructive', onPress: () => settings.logoutTelegram() }
+            ]);
+          } else {
+            startTelegramAuth();
+          }
+        }}
       />
 
       {/* About */}
@@ -322,11 +413,172 @@ export const SettingsScreen: React.FC = () => {
         }
       />
 
+      {/* Diagnostics */}
+      <SectionHeader title="Diagnostics" icon="build" />
+      <SettingRow
+        label="Test Download"
+        value="Download a 1MB test file"
+        icon="flask"
+        onPress={() => {
+          Alert.alert(
+            'Test Download',
+            'This will download a 1MB test file to verify the download engine works.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Start Test',
+                onPress: async () => {
+                  try {
+                    await downloadService.startDownload({
+                      url: 'https://proof.ovh.net/files/1Mb.dat',
+                      fileName: 'test_1MB.dat',
+                    });
+                    Alert.alert('✅ Test Started', 'Check the Downloads tab for progress!');
+                  } catch (e: any) {
+                    Alert.alert('❌ Test Failed', e.message);
+                  }
+                },
+              },
+            ]
+          );
+        }}
+      />
+      <SettingRow
+        label="Download Engine"
+        value="expo-file-system DownloadResumable"
+        icon="hardware-chip"
+      />
+
+      {/* Edit URL Modal */}
+      <Modal
+        visible={editModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalOverlay}
+        >
+          <View style={[styles.modalCard, { backgroundColor: colors.card, borderRadius: radii.lg }]}>
+            <Text style={[typo.headline, { color: colors.text, marginBottom: spacing.md }]}>
+              {editModalTitle}
+            </Text>
+            <TextInput
+              style={[
+                styles.modalInput,
+                {
+                  backgroundColor: colors.bg,
+                  color: colors.text,
+                  borderRadius: radii.md,
+                  borderColor: colors.separator,
+                  padding: spacing.md,
+                },
+              ]}
+              value={editModalValue}
+              onChangeText={setEditModalValue}
+              placeholder="e.g. http://192.168.1.100:8000"
+              placeholderTextColor={colors.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              selectTextOnFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.bg, borderRadius: radii.md }]}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text style={[typo.body, { color: colors.muted }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.accent, borderRadius: radii.md }]}
+                onPress={() => {
+                  editModalOnSave?.(editModalValue);
+                  setEditModalVisible(false);
+                }}
+              >
+                <Text style={[typo.bodyBold, { color: '#FFF' }]}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Telegram Auth Modal */}
+      <Modal
+        visible={telegramAuthStep !== 'idle'}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setTelegramAuthStep('idle')}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+              <View style={styles.modalHeader}>
+                <Text style={[typo.headline, { color: colors.text }]}>
+                  {telegramAuthStep === 'phone' ? 'Connect Telegram' : 'Enter SMS Code'}
+                </Text>
+                <TouchableOpacity onPress={() => setTelegramAuthStep('idle')}>
+                  <Icon name="close" size={24} color={colors.muted} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[typo.body, { color: colors.muted, marginBottom: spacing.md }]}>
+                {telegramAuthStep === 'phone' 
+                  ? 'Enter your phone number with country code (e.g. +1234567890).' 
+                  : `Enter the code sent to ${telegramPhoneInput} via Telegram app or SMS.`}
+              </Text>
+
+              {telegramAuthStep === 'phone' ? (
+                <TextInput
+                  style={[
+                    styles.modalInput,
+                    { color: colors.text, backgroundColor: colors.bg, borderColor: colors.separator },
+                  ]}
+                  value={telegramPhoneInput}
+                  onChangeText={setTelegramPhoneInput}
+                  placeholder="+1234567890"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="phone-pad"
+                  autoFocus
+                  editable={!isAuthenticating}
+                />
+              ) : (
+                <TextInput
+                  style={[
+                    styles.modalInput,
+                    { color: colors.text, backgroundColor: colors.bg, borderColor: colors.separator },
+                  ]}
+                  value={telegramCodeInput}
+                  onChangeText={setTelegramCodeInput}
+                  placeholder="12345"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="number-pad"
+                  autoFocus
+                  editable={!isAuthenticating}
+                />
+              )}
+
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.accent, opacity: isAuthenticating ? 0.6 : 1 }]}
+                onPress={telegramAuthStep === 'phone' ? handleSendTelegramCode : handleVerifyTelegramCode}
+                disabled={isAuthenticating}
+              >
+                <Text style={[typo.bodyBold, { color: '#FFF' }]}>
+                  {isAuthenticating ? 'Please wait...' : telegramAuthStep === 'phone' ? 'Send Code' : 'Verify & Connect'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
       {/* Footer */}
       <View style={[styles.footer, { padding: spacing.xxl }]}>
         <Text style={[typo.caption2, { color: colors.muted, textAlign: 'center' }]}>
           NexLoad v1.0.0 Beta{'\n'}
-          Built with ⚡ by NexLoad Team{'\n'}
+          Made with ❤️ by Sonu Verma{'\n'}
           Zero-cost infrastructure
         </Text>
       </View>
@@ -338,10 +590,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  appHeader: {},
+  appHeader: {
+    overflow: 'hidden',
+  },
+  headerCircle: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  headerCircle1: {
+    width: 200,
+    height: 200,
+    top: -60,
+    right: -40,
+  },
+  headerCircle2: {
+    width: 150,
+    height: 150,
+    bottom: -30,
+    left: -30,
+  },
+  versionBadge: {},
   appIcon: {
-    width: 64,
-    height: 64,
+    width: 68,
+    height: 68,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -369,4 +640,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   footer: {},
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    padding: 24,
+  },
+  modalInput: {
+    borderWidth: 1,
+    fontSize: 15,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  modalBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
 });

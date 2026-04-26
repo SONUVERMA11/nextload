@@ -1,91 +1,101 @@
-# NexLoad
+<div align="center">
+  <img src="./assets/icon.png" width="120" height="120" alt="NexLoad Logo" />
+  <h1>NexLoad ⚡</h1>
+  <p><strong>Download Anything. At Full Speed.</strong></p>
 
-> Download Anything. At Full Speed. ⚡
+  <p>
+    <a href="#features">Features</a> •
+    <a href="#architecture">Architecture</a> •
+    <a href="#installation">Installation</a> •
+    <a href="#configuration">Configuration</a> •
+    <a href="#contributing">Contributing</a>
+  </p>
+</div>
 
-Ultimate Android Download Manager built with React Native (Expo Bare Workflow).
+---
 
-## Features
+## 📱 About NexLoad
 
-- **Direct HTTP/HTTPS downloads** — chunked, resumable, 8 parallel threads
-- **YouTube & 1000+ sites** — via yt-dlp backend (YouTube, Instagram, Twitter/X, TikTok, etc.)
-- **Torrent/Magnet downloads** — full DHT, PEX, LSD peer discovery
-- **Telegram file downloads** — paste any t.me link
-- **MP3 extraction** — convert any video to audio (128/192/320kbps/FLAC)
-- **Torrent search** — unified search across YTS, EZTV, TPB, Nyaa, LimeTorrents
-- **Built-in file manager** — browse, share, rename, delete
-- **Dark/Light theme** — iOS-inspired design with system-aware toggle
-- **Background downloads** — continues when screen is off
-- **Batch downloads** — paste multiple URLs at once
-- **Clipboard detection** — auto-suggests download when URL is copied
+**NexLoad** is a powerful, all-in-one download manager built with React Native (Expo) and FastAPI. It combines the power of native file system downloads with an advanced backend ecosystem to download files from almost anywhere on the internet.
 
-## Tech Stack
+Whether it's a YouTube video, a Telegram file, an Instagram reel, or a Magnet link — NexLoad handles it seamlessly with a beautiful, modern UI.
 
-| Layer | Library |
-|-------|---------|
-| Framework | React Native (Expo Bare) |
-| Language | TypeScript (strict) |
-| Navigation | @react-navigation/bottom-tabs v6 |
-| State | Zustand |
-| HTTP | axios |
-| Animations | react-native-reanimated v3 |
-| Icons | Ionicons |
-| Storage | react-native-mmkv |
-| FFmpeg | ffmpeg-kit-react-native |
-| Backend | FastAPI + yt-dlp |
+![UI Sneak Peek](https://via.placeholder.com/800x400.png?text=NexLoad+UI+Showcase)
 
-## Getting Started
+---
 
-### 1. Install dependencies
-```bash
-npm install
-```
+## ✨ Features
 
-### 2. Generate native Android project
-```bash
-npx expo prebuild --platform android
-```
+- **🚀 Universal Downloader**: Supports direct links, torrents/magnets, Telegram channels, and 1000+ video sites.
+- **⚡ Background & Resumable**: Powered by Expo FileSystem, downloads continue in the background and can be paused/resumed dynamically.
+- **📱 Beautiful UI/UX**: Built with a sleek, responsive design, dark/light mode support, and premium micro-interactions.
+- **🤖 Telegram Integration**: Industry-first in-app Telegram authentication! Log into your own Telegram account securely and download files from any private group directly to your device.
+- **🌐 Jackett Integration**: Connect your Jackett server to search across 400+ torrent indexers straight from the app.
+- **🎨 Custom Styling**: Highly polished interface featuring glassmorphism elements, accent gradients, and fluid animations.
 
-### 3. Run on Android
-```bash
-npx expo run:android
-```
+---
 
-### 4. Deploy backend
+## 🏗️ Architecture
+
+NexLoad consists of two main components:
+
+1. **Frontend (Mobile App)**
+   - **Framework**: React Native (Expo SDK 52)
+   - **State Management**: Zustand (with MMKV for blazing-fast persistence)
+   - **Icons**: Ionicons
+
+2. **Backend (API Server)**
+   - **Framework**: Python + FastAPI
+   - **Video Engine**: `yt-dlp` (Extracts direct URLs from video platforms)
+   - **Torrent Engine**: `libtorrent` (Native C++ torrent processing)
+   - **Telegram Engine**: `Telethon` (Stateless multi-user MTProto client)
+
+---
+
+## 🛠️ Installation
+
+### 1. Backend Setup
+
+The backend handles heavy lifting (video extraction, torrent downloading, telegram auth) so the mobile app stays fast and compliant.
+
 ```bash
 cd backend
-docker build -t nexload-ytdlp .
-docker run -p 8000:8000 nexload-ytdlp
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
+> **Note:** For full functionality (Torrents), deploy the backend using the included `Dockerfile` to a Linux environment (like Render.com or Railway).
 
-Or deploy to [Render.com](https://render.com) for free hosting.
+### 2. Frontend Setup
 
-## Build APK (EAS)
+Make sure you have Node.js and Expo CLI installed.
+
 ```bash
-npm install -g eas-cli
-eas login
-eas build:configure
-eas build -p android --profile preview
+npm install
+npx expo start
 ```
+Scan the QR code with the **Expo Go** app on your phone to start testing!
 
-## Project Structure
-```
-NexLoad/
-├── App.tsx                    ← Root with bottom tab navigator
-├── src/
-│   ├── screens/               ← 4 main screens
-│   ├── components/            ← 8 reusable UI components
-│   ├── services/              ← 7 service modules
-│   ├── store/                 ← 3 Zustand stores
-│   ├── theme/                 ← Color palettes, typography, ThemeProvider
-│   ├── hooks/                 ← Custom React hooks
-│   └── utils/                 ← Formatting & helper utilities
-├── backend/                   ← FastAPI yt-dlp server
-│   ├── main.py
-│   ├── requirements.txt
-│   └── Dockerfile
-└── package.json
-```
+---
 
-## License
+## ⚙️ Configuration
 
-MIT
+Open the **Settings** tab in the NexLoad app to configure integrations:
+
+- **yt-dlp Server URL**: Point this to your hosted backend (e.g., `http://192.168.x.x:8000` for local testing).
+- **Telegram Account**: Enter your phone number in the app to authenticate a stateless Telegram session.
+- **Jackett Server URL**: Connect your self-hosted Jackett instance for built-in torrent searching.
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
+Feel free to check the [issues page](https://github.com/SONUVERMA11/nextload/issues).
+
+---
+
+<div align="center">
+  <p>Made with ❤️ by <strong>Sonu Verma</strong></p>
+</div>

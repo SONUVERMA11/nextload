@@ -5,7 +5,7 @@
 
 import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { DownloadItem, useDownloadsStore } from '../store/downloads.store';
 import { formatBytes } from '../utils/formatBytes';
@@ -188,16 +188,19 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({ item }) => {
         </View>
       </View>
 
-      {/* Error Message */}
-      {item.error && item.status === 'failed' && (
+      {/* Error / Status Message */}
+      {item.error && (
         <Text
           style={[
             typo.caption2,
-            { color: colors.danger, marginTop: spacing.xs },
+            {
+              color: item.status === 'failed' ? colors.danger : colors.muted,
+              marginTop: spacing.xs,
+            },
           ]}
-          numberOfLines={1}
+          numberOfLines={2}
         >
-          ⚠ {item.error}
+          {item.status === 'failed' ? '⚠ ' : '⏳ '}{item.error}
         </Text>
       )}
 

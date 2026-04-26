@@ -32,8 +32,8 @@ export const useClipboardWatcher = ({
   const checkClipboard = useCallback(async () => {
     try {
       // Dynamic import to avoid crash if module not available
-      const Clipboard = require('@react-native-clipboard/clipboard').default;
-      const content = await Clipboard.getString();
+      const Clipboard = require('expo-clipboard');
+      const content = await Clipboard.getStringAsync();
 
       if (content && content !== lastClipboardContent.current && isValidUrl(content)) {
         lastClipboardContent.current = content;

@@ -17,7 +17,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { detectLink, isValidUrl, supportsQualitySelection } from '../utils/linkDetector';
 import { VIDEO_QUALITIES, AUDIO_QUALITIES } from '../services/ytdlp.service';
@@ -53,8 +53,8 @@ export const AddDownloadSheet: React.FC<AddDownloadSheetProps> = ({
 
   const handlePasteFromClipboard = useCallback(async () => {
     try {
-      const Clipboard = require('@react-native-clipboard/clipboard').default;
-      const content = await Clipboard.getString();
+      const Clipboard = require('expo-clipboard');
+      const content = await Clipboard.getStringAsync();
       if (content) {
         if (isBatchMode) {
           setUrls((prev) => (prev ? `${prev}\n${content}` : content));

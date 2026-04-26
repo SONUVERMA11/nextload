@@ -13,7 +13,7 @@ import {
   StyleSheet,
   RefreshControl,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { useDownloadsStore, DownloadItem } from '../store/downloads.store';
 import { useClipboardWatcher } from '../hooks/useClipboardWatcher';
