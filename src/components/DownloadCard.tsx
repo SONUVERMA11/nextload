@@ -14,6 +14,7 @@ import { getLinkTypeIcon, getLinkTypeColor } from '../services/linkDetector';
 import * as downloadService from '../services/download.service';
 import * as Sharing from 'expo-sharing';
 import * as IntentLauncher from 'expo-intent-launcher';
+import * as FileSystem from 'expo-file-system';
 
 interface DownloadCardProps {
   item: DownloadItem;
@@ -50,8 +51,14 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({ item }) => {
     if (item.status !== 'completed' || !item.filePath) return;
     try {
       if (Platform.OS === 'android') {
+        const mimeType = item.filePath.endsWith('.mp4') ? 'video/mp4' : 
+                         item.filePath.endsWith('.m4a') ? 'audio/mp4' :
+                         item.filePath.endsWith('.mp3') ? 'audio/mpeg' : '*/*';
+                         
+        const cUri = await FileSystem.getContentUriAsync(item.filePath);
         await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-          data: item.filePath,
+          data: cUri,
+          type: mimeType,
           flags: 1,
         });
       } else {
