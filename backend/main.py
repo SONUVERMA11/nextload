@@ -23,6 +23,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict
 import yt_dlp
+import os
 import asyncio
 import time
 import os
@@ -116,12 +117,22 @@ async def health_check():
 async def get_info(url: str = Query(..., description="Video URL to extract info from")):
     """Extract video metadata and available formats from a URL."""
     try:
+        # Check for cookies via Environment Variable
+        youtube_cookies = os.getenv("YOUTUBE_COOKIES")
+        cookie_file_path = "cookies.txt"
+        if youtube_cookies and not os.path.exists(cookie_file_path):
+            with open(cookie_file_path, "w") as f:
+                f.write(youtube_cookies)
+                
         opts = {
             "quiet": True,
             "no_warnings": True,
             "no_color": True,
             "skip_download": True,
+            "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
         }
+        if os.path.exists(cookie_file_path):
+            opts["cookiefile"] = cookie_file_path
 
         loop = asyncio.get_event_loop()
         info = await loop.run_in_executor(None, lambda: _extract_info(url, opts))
@@ -173,12 +184,16 @@ async def get_direct_url(
 ):
     """Get a direct download URL for a specific format."""
     try:
+        cookie_file_path = "cookies.txt"
         opts = {
             "format": format_id,
             "quiet": True,
             "no_warnings": True,
             "no_color": True,
+            "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
         }
+        if os.path.exists(cookie_file_path):
+            opts["cookiefile"] = cookie_file_path
 
         loop = asyncio.get_event_loop()
         info = await loop.run_in_executor(None, lambda: _extract_info(url, opts))
@@ -218,12 +233,16 @@ async def get_playlist(
 ):
     """Extract playlist metadata and entries."""
     try:
+        cookie_file_path = "cookies.txt"
         opts = {
             "quiet": True,
             "no_warnings": True,
             "extract_flat": True,
             "playlistend": limit,
+            "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
         }
+        if os.path.exists(cookie_file_path):
+            opts["cookiefile"] = cookie_file_path
 
         loop = asyncio.get_event_loop()
         info = await loop.run_in_executor(None, lambda: _extract_info(url, opts))
