@@ -22,6 +22,8 @@ import { useTheme } from '../hooks/useTheme';
 import { detectLink, isValidUrl, supportsQualitySelection } from '../utils/linkDetector';
 import { VIDEO_QUALITIES, AUDIO_QUALITIES } from '../services/ytdlp.service';
 import * as downloadService from '../services/download.service';
+import { useSettingsStore } from '../store/settings.store';
+import * as FileSystem from 'expo-file-system';
 
 interface AddDownloadSheetProps {
   visible: boolean;
@@ -35,6 +37,7 @@ export const AddDownloadSheet: React.FC<AddDownloadSheetProps> = ({
   initialUrl = '',
 }) => {
   const { colors, radii, spacing, typography: typo, isDark } = useTheme();
+  const settings = useSettingsStore();
   const [url, setUrl] = useState(initialUrl);
   const [urls, setUrls] = useState(''); // For batch mode
   const [isBatchMode, setIsBatchMode] = useState(false);
@@ -357,6 +360,45 @@ export const AddDownloadSheet: React.FC<AddDownloadSheetProps> = ({
                   </View>
                 </View>
               )}
+
+              {/* Save Location */}
+              <View style={{ marginTop: spacing.xl }}>
+                <Text style={[typo.caption1, { color: colors.muted, marginBottom: spacing.sm }]}>
+                  Save to Location
+                </Text>
+                <TouchableOpacity
+                  onPress={async () => {
+                    try {
+                      const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+                      if (permissions.granted) {
+                        settings.setDownloadPath(permissions.directoryUri);
+                      }
+                    } catch (e: any) {
+                      Alert.alert('Error', 'Failed to pick directory: ' + e.message);
+                    }
+                  }}
+                  style={[
+                    styles.inputContainer,
+                    {
+                      backgroundColor: colors.bg,
+                      borderRadius: radii.lg,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      padding: spacing.md,
+                    },
+                  ]}
+                >
+                  <Icon name="folder" size={20} color={colors.accent} style={{ marginRight: spacing.sm }} />
+                  <Text style={[typo.body, { color: colors.text, flex: 1 }]} numberOfLines={1}>
+                    {settings.downloadPath 
+                      ? (settings.downloadPath.startsWith('content://') 
+                          ? decodeURIComponent(settings.downloadPath).split(':').pop() || 'Custom Folder'
+                          : settings.downloadPath.split('/').pop() || settings.downloadPath)
+                      : 'Internal App Storage (Tap to change)'}
+                  </Text>
+                  <Text style={[typo.caption1, { color: colors.accent }]}>Change</Text>
+                </TouchableOpacity>
+              </View>
 
               {/* Download Button */}
               <TouchableOpacity

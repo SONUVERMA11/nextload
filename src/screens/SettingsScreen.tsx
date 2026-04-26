@@ -237,7 +237,11 @@ export const SettingsScreen: React.FC = () => {
       <SectionHeader title="Downloads" icon="download" />
       <SettingRow
         label="Download Location"
-        value={settings.downloadPath}
+        value={settings.downloadPath 
+          ? (settings.downloadPath.startsWith('content://') 
+              ? decodeURIComponent(settings.downloadPath).split(':').pop() || 'Custom Folder'
+              : settings.downloadPath.split('/').pop() || settings.downloadPath)
+          : 'Internal App Storage'}
         icon="folder"
         onPress={() =>
           Alert.alert('Download Path', 'Select download folder', [

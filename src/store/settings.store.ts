@@ -45,7 +45,7 @@ interface SettingsState {
 
 const DEFAULT_SETTINGS = {
   themeMode: 'system' as ThemeMode,
-  downloadPath: '/storage/emulated/0/Download/NexLoad',
+  downloadPath: '',
   maxConcurrentDownloads: 3,
   speedLimitEnabled: false,
   speedLimitKbps: 0,
