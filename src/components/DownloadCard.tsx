@@ -4,7 +4,7 @@
  */
 
 import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { DownloadItem, useDownloadsStore } from '../store/downloads.store';
@@ -12,6 +12,8 @@ import { formatBytes } from '../utils/formatBytes';
 import { formatSpeed, formatETA } from '../utils/formatSpeed';
 import { getLinkTypeIcon, getLinkTypeColor } from '../services/linkDetector';
 import * as downloadService from '../services/download.service';
+import * as Sharing from 'expo-sharing';
+import * as IntentLauncher from 'expo-intent-launcher';
 
 interface DownloadCardProps {
   item: DownloadItem;
@@ -44,11 +46,33 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({ item }) => {
     downloadService.resumeDownload(item.id);
   }, [item.id]);
 
+  const handleOpen = useCallback(async () => {
+    if (item.status !== 'completed' || !item.filePath) return;
+    try {
+      if (Platform.OS === 'android') {
+        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+          data: item.filePath,
+          flags: 1,
+        });
+      } else {
+        await Sharing.shareAsync(item.filePath);
+      }
+    } catch (e: any) {
+      try {
+        await Sharing.shareAsync(item.filePath);
+      } catch (err) {
+        Alert.alert('Error', 'Could not open file. It may have been moved or deleted.');
+      }
+    }
+  }, [item.status, item.filePath]);
+
   // Status-specific styling
   const statusConfig = getStatusConfig(item.status, colors);
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={item.status === 'completed' ? 0.7 : 1}
+      onPress={handleOpen}
       style={[
         styles.container,
         {
@@ -228,7 +252,7 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({ item }) => {
           <Icon name="close" size={16} color={colors.muted} />
         </TouchableOpacity>
       )}
-    </View>
+    </TouchableOpacity>
   );
 };
 
