@@ -78,7 +78,7 @@ const AppNavigator: React.FC = () => {
             const iconName = focused
               ? TAB_ICONS[route.name]?.active
               : TAB_ICONS[route.name]?.inactive;
-            return <Icon name={iconName || 'help'} size={22} color={color} />;
+            return <Icon name={(iconName || 'help') as any} size={22} color={color} />;
           },
           tabBarActiveTintColor: colors.tabActive,
           tabBarInactiveTintColor: colors.tabInactive,

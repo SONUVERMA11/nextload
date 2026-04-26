@@ -13,7 +13,7 @@ interface ThemeToggleProps {
   compact?: boolean;
 }
 
-const MODES: { mode: ThemeMode; icon: string; label: string }[] = [
+const MODES: { mode: ThemeMode; icon: any; label: string }[] = [
   { mode: 'light', icon: 'sunny', label: 'Light' },
   { mode: 'system', icon: 'phone-portrait', label: 'System' },
   { mode: 'dark', icon: 'moon', label: 'Dark' },

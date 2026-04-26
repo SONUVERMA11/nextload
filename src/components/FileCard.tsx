@@ -24,7 +24,7 @@ interface FileCardProps {
   onLongPress?: (file: FileItem) => void;
 }
 
-const FILE_ICONS: Record<string, { icon: string; color: string }> = {
+const FILE_ICONS: Record<string, { icon: any; color: string }> = {
   video: { icon: 'videocam', color: '#FF3B30' },
   audio: { icon: 'musical-notes', color: '#AF52DE' },
   torrent: { icon: 'magnet', color: '#FF6B35' },

@@ -110,7 +110,7 @@ export const SettingsScreen: React.FC = () => {
     }
   };
 
-  const SectionHeader: React.FC<{ title: string; icon: string }> = ({ title, icon }) => (
+  const SectionHeader: React.FC<{ title: string; icon: any }> = ({ title, icon }) => (
     <View style={[styles.sectionHeader, { marginTop: spacing.xxl, paddingHorizontal: spacing.xl }]}>
       <Icon name={icon} size={18} color={colors.accent} />
       <Text style={[typo.headline, { color: colors.text, marginLeft: spacing.sm }]}>
@@ -122,7 +122,7 @@ export const SettingsScreen: React.FC = () => {
   const SettingRow: React.FC<{
     label: string;
     value?: string;
-    icon: string;
+    icon: any;
     onPress?: () => void;
     rightElement?: React.ReactNode;
   }> = ({ label, value, icon, onPress, rightElement }) => (
@@ -646,6 +646,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   modalCard: {
     width: '100%',

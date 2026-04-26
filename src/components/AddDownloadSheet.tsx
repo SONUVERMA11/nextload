@@ -218,7 +218,7 @@ export const AddDownloadSheet: React.FC<AddDownloadSheetProps> = ({
                   {detection && !isBatchMode && (
                     <View style={[styles.detectionIcon, { marginLeft: spacing.md }]}>
                       <Icon
-                        name={detection.icon}
+                        name={detection.icon as any}
                         size={20}
                         color={detection.color}
                       />

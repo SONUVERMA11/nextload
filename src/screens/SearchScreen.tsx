@@ -22,7 +22,7 @@ import { TorrentResultCard } from '../components/TorrentResultCard';
 import { FilterChips, CATEGORY_CHIPS, SORT_CHIPS } from '../components/FilterChips';
 import { TorrentResultSkeleton } from '../components/SkeletonLoader';
 
-const TABS: { key: SearchTab; label: string; icon: string }[] = [
+const TABS: { key: SearchTab; label: string; icon: any }[] = [
   { key: 'torrent', label: 'Torrent', icon: 'magnet-outline' },
   { key: 'direct', label: 'Direct Link', icon: 'link-outline' },
   { key: 'youtube', label: 'YouTube', icon: 'logo-youtube' },

@@ -11,7 +11,7 @@ import { useTheme } from '../hooks/useTheme';
 export interface ChipItem {
   key: string;
   label: string;
-  icon?: string;
+  icon?: any;
   count?: number;
 }
 

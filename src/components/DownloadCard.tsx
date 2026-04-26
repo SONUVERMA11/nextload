@@ -74,7 +74,7 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({ item }) => {
           ]}
         >
           <Icon
-            name={getLinkTypeIcon(item.linkType)}
+            name={getLinkTypeIcon(item.linkType) as any}
             size={20}
             color={getLinkTypeColor(item.linkType)}
           />
@@ -119,7 +119,7 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({ item }) => {
             },
           ]}
         >
-          <Icon name={statusConfig.actionIcon} size={18} color={statusConfig.accentColor} />
+          <Icon name={statusConfig.actionIcon as any} size={18} color={statusConfig.accentColor} />
         </TouchableOpacity>
       </View>
 
