@@ -55,7 +55,7 @@ const DEFAULT_SETTINGS = {
   showCompletionAlert: true,
   vibrateOnComplete: true,
   jackettServerUrl: '',
-  ytdlpServerUrl: 'https://nexload-ytdlp.onrender.com',
+  ytdlpServerUrl: 'https://nextload-1.onrender.com',
   telegramSession: '',
   telegramPhone: '',
 };
